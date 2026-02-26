@@ -25,6 +25,9 @@ MAIN_O = main.o
 # Правило по умолчанию
 all: $(TARGET)
 
+run: $(TARGET)
+	./matrix_mul
+
 # Сборка исполняемого файла
 $(TARGET): $(MAIN) $(UNIT)
 	$(FPC) $(CFLAGS) -o$(TARGET) $(MAIN)
