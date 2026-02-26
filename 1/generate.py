@@ -26,7 +26,7 @@ def generate_matrix_file(filename, n):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Использование: python generate.py <размер матрицы>")
+        print("Использование: python3 generate.py <размер матрицы>")
         sys.exit(1)
     try:
         n = int(sys.argv[1])
