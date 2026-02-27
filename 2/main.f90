@@ -7,7 +7,6 @@ program multiply_tridiagonal
 	real(8), allocatable :: dB(:), lB(:), uB(:)
 	real(8), allocatable :: Cdata(:)
 	integer, allocatable :: offsetC(:)
-	real(8) :: x1, x2, x3
 	integer :: low, high
 	character(100) :: header
 
