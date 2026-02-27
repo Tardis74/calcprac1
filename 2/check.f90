@@ -2,38 +2,30 @@ program check_result
    implicit none
    integer :: n, i, j, low, high, idx, n_err
    real(8), allocatable :: A_full(:,:), B_full(:,:), C_full(:,:)
-   real(8), allocatable :: ad_A(:), al_A(:), ar_A(:)
-   real(8), allocatable :: ad_B(:), al_B(:), ar_B(:)
+   real(8), allocatable :: dA(:), lA(:), uA(:)
+   real(8), allocatable :: dB(:), lB(:), uB(:)
    real(8), allocatable :: Cdata(:)
    integer, allocatable :: offsetC(:)
    real(8) :: x1, x2, x3, diff, max_diff, tol
    character(100) :: header
    logical :: ok
 
-   ! Чтение матрицы A из data1.dat
+   ! Чтение матрицы A из data1.dat (по строкам)
    open(10, file='data1.dat', status='old', action='read')
    read(10, '(A)') header
    read(header(2:), *) n
-   allocate(ad_A(n), al_A(n), ar_A(n))
-   al_A(1) = 0.0d0; ar_A(n) = 0.0d0
+   allocate(dA(n), lA(n), uA(n))
+   lA(1) = 0.0d0; uA(n) = 0.0d0
    if (n == 1) then
-      read(10, *) ad_A(1)
+      read(10, *) dA(1)
    else
-      do j = 1, n
-         if (j == 1 .or. j == n) then
-            read(10, *) x1, x2
-            if (j == 1) then
-               ad_A(1) = x1
-               al_A(2) = x2
-            else
-               ar_A(n-1) = x1
-               ad_A(n)   = x2
-            end if
+      do i = 1, n
+         if (i == 1) then
+            read(10, *) dA(1), uA(1)
+         else if (i == n) then
+            read(10, *) lA(n), dA(n)
          else
-            read(10, *) x1, x2, x3
-            ar_A(j-1) = x1
-            ad_A(j)   = x2
-            al_A(j+1) = x3
+            read(10, *) lA(i), dA(i), uA(i)
          end if
       end do
    end if
@@ -42,26 +34,18 @@ program check_result
    ! Чтение матрицы B из data2.dat
    open(11, file='data2.dat', status='old', action='read')
    read(11, '(A)') header
-   allocate(ad_B(n), al_B(n), ar_B(n))
-   al_B(1) = 0.0d0; ar_B(n) = 0.0d0
+   allocate(dB(n), lB(n), uB(n))
+   lB(1) = 0.0d0; uB(n) = 0.0d0
    if (n == 1) then
-      read(11, *) ad_B(1)
+      read(11, *) dB(1)
    else
-      do j = 1, n
-         if (j == 1 .or. j == n) then
-            read(11, *) x1, x2
-            if (j == 1) then
-               ad_B(1) = x1
-               al_B(2) = x2
-            else
-               ar_B(n-1) = x1
-               ad_B(n)   = x2
-            end if
+      do i = 1, n
+         if (i == 1) then
+            read(11, *) dB(1), uB(1)
+         else if (i == n) then
+            read(11, *) lB(n), dB(n)
          else
-            read(11, *) x1, x2, x3
-            ar_B(j-1) = x1
-            ad_B(j)   = x2
-            al_B(j+1) = x3
+            read(11, *) lB(i), dB(i), uB(i)
          end if
       end do
    end if
@@ -72,14 +56,14 @@ program check_result
    A_full = 0.0d0
    B_full = 0.0d0
    do i = 1, n
-      A_full(i,i) = ad_A(i)
-      if (i > 1) A_full(i,i-1) = al_A(i)
-      if (i < n) A_full(i,i+1) = ar_A(i)
+      A_full(i,i) = dA(i)
+      if (i > 1) A_full(i,i-1) = lA(i)
+      if (i < n) A_full(i,i+1) = uA(i)
    end do
    do i = 1, n
-      B_full(i,i) = ad_B(i)
-      if (i > 1) B_full(i,i-1) = al_B(i)
-      if (i < n) B_full(i,i+1) = ar_B(i)
+      B_full(i,i) = dB(i)
+      if (i > 1) B_full(i,i-1) = lB(i)
+      if (i < n) B_full(i,i+1) = uB(i)
    end do
 
    ! Вычисление точного произведения
@@ -100,14 +84,15 @@ program check_result
    ! Чтение упакованного результата из result.dat
    open(12, file='result.dat', status='old', action='read')
    read(12, '(A)') header
-   do j = 1, n
-      low = max(1, j-2)
-      high = min(n, j+2)
-      read(12, *) (Cdata(offsetC(j) + (i - low)), i = low, high)
+   do i = 1, n
+      low = max(1, i-2)
+      high = min(n, i+2)
+      ! Читаем строку, содержащую элементы C(i,j) для j от low до high
+      read(12, *) (Cdata( offsetC(j) + (i - max(1,j-2)) ), j = low, high)
    end do
    close(12)
 
-   ! Сравнение с допуском (для двойной точности можно оставить 1e-12)
+   ! Сравнение с допуском
    tol = 1.0d-12
    max_diff = 0.0d0
    n_err = 0
@@ -137,5 +122,5 @@ program check_result
       stop 1
    end if
 
-   deallocate(ad_A, al_A, ar_A, ad_B, al_B, ar_B, A_full, B_full, C_full, Cdata, offsetC)
+   deallocate(dA, lA, uA, dB, lB, uB, A_full, B_full, C_full, Cdata, offsetC)
 end program check_result

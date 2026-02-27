@@ -4,10 +4,10 @@ module mat_mult
 	public :: mult_tridiag
 
 contains
-	subroutine mult_tridiag(n, ad_A, al_A, ar_A, ad_B, al_B, ar_B, Cdata, offsetC)
+	subroutine mult_tridiag(n, dA, lA, uA, dB, lB, uB, Cdata, offsetC)
 		integer, intent(in) :: n	!размер матриц
-		real(8), intent(in) :: ad_A(:), al_A(:), ar_A(:)	!диагонали A: главная, нижняя, верхняя
-		real(8), intent(in) :: ad_B(:), al_B(:), ar_B(:)	!диагонали B
+		real(8), intent(in) :: dA(:), lA(:), uA(:)	!диагонали A: главная, нижняя, верхняя
+		real(8), intent(in) :: dB(:), lB(:), uB(:)	!диагонали B
 		real(8), allocatable, intent(out) :: Cdata(:)	!одномерный массив, содержащий элементы C по столбцам
 		integer, allocatable, intent(out) :: offsetC(:)	!массив длины n+1, где offsetC(j) - позиция начала строки j в Cdata
 
@@ -37,10 +37,10 @@ contains
 		do j = 1, n
 			! Три ненулевых элемента столбца j матрицы B
 			b_left  = 0.0d0
-			if (j > 1) b_left  = ar_B(j-1)   ! B(j-1, j)
-				b_mid   = ad_B(j)                 ! B(j, j)
+			if (j > 1) b_left  = uB(j-1)   ! B(j-1, j)
+				b_mid   = dB(j)                 ! B(j, j)
 				b_right = 0.0d0
-				if (j < n) b_right = al_B(j+1)    ! B(j+1, j)
+				if (j < n) b_right = lB(j+1)    ! B(j+1, j)
 
 				low = max(1, j-2)
 				high = min(n, j+2)
@@ -50,17 +50,17 @@ contains
 					d = i - j
 					select case(d)
 						case(-2)
-							c = ar_A(i) * b_left
+							c = uA(i) * b_left
 						case(-1)
-							c = ad_A(i) * b_left + ar_A(i) * b_mid
+							c = dA(i) * b_left + uA(i) * b_mid
 						case(0)
-							c = ad_A(i) * b_mid
-							if (i > 1) c = c + al_A(i) * b_left
-							if (i < n) c = c + ar_A(i) * b_right
+							c = dA(i) * b_mid
+						       if (i > 1) c = c + lA(i) * b_left
+						       if (i < n) c = c + uA(i) * b_right
 						case(1)
-							c = al_A(i) * b_mid + ad_A(i) * b_right
+							c = lA(i) * b_mid + dA(i) * b_right
 						case(2)
-							c = al_A(i) * b_right
+							c = lA(i) * b_right
 						case default
 							c = 0.0d0   ! не должно достигаться
 					end select

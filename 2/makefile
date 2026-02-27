@@ -1,11 +1,11 @@
 # Компилятор и флаги
 FC = gfortran
-FFLAGS = -O2 -Wall -Wextra
+FFLAGS = -O2
 
 # Имена исполняемых файлов
-MAIN_EXE = main
-GEN_EXE = generate
-CHECK_EXE = check
+MAIN_EXE = main.x
+GEN_EXE = generate.x
+CHECK_EXE = check.x
 
 # Размер матрицы по умолчанию (можно переопределить при вызове make)
 N ?= 10
